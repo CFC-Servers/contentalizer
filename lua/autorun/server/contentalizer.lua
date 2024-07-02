@@ -4,61 +4,50 @@
 
 if CLIENT or not game.IsDedicated() then return end -- Just in case people subscribe to it (which they will)
 
-local findContent
-do
-	local exts = {"vtf", "vmt", "mp3", "ogg", "wav", "mdl", "phy", "jpg", "jpeg", "png", "properties"}
-	function findContent(path, dir, state)
-		state = state or { foundContent = false, foundMap = false, foundCurMap = false }
-		local f, d = file.Find(path .. "*", dir)
-		if istable(f) then
-			for _, f in ipairs(f) do
-				if string.EndsWith(f, ".bsp") then
-					state.foundMap = true
-					if f:gsub("%.bsp$", "") == game.GetMap() then
-						state.foundCurMap = true
-					end
-				else
-					for _, ext in ipairs(exts) do
-						if string.EndsWith(f, "." .. ext) then
-							state.foundContent = true
-						end
-					end
-				end
-			end
-		end
-		if istable(d) then
-			for _, d in ipairs(d) do
-				findContent(path .. d .. "/", dir, state)
-			end
-		end
-		return state
-	end
+local exts = {
+    vtf = true,
+    vmt = true,
+    mp3 = true,
+    ogg = true,
+    wav = true,
+    mdl = true,
+    phy = true,
+    jpg = true,
+    jpeg = true,
+    png = true,
+    properties = true,
+}
+local function findContent(path, dir)
+    local f, d = file.Find(path .. "*", dir)
+    if istable(f) then
+        for _, f in ipairs(f) do
+            local extension = string.GetExtensionFromFilename(f)
+            if extension and exts[extension] then
+                return true
+            end
+        end
+    end
+
+    if istable(d) then
+        for _, d in ipairs(d) do
+            if path .. d ~= "lua" and findContent(path .. d .. "/", dir) then
+                return true
+            end
+        end
+    end
+    return false
 end
 
-local print do
-	local COLOR_PINK = Color(255, 0, 255)
-	local COLOR_WHITE = Color(255, 255, 255)
-	local COLOR_BLUE = Color(0, 255, 255)
-	function print(color, prefix, title, wsid, suffix)
-		MsgC(COLOR_PINK, "[Contentalizer] ", color, prefix, " ", COLOR_BLUE, ("%s (%s)"):format(title, wsid), " ", COLOR_WHITE, suffix, "\n")
-	end
+print("[Contentalizer] Checking for content in addons...")
+for _, addon in SortedPairsByMemberValue(engine.GetAddons(), "title") do
+    if addon.wsid and addon.mounted then
+        local found = findContent("", addon.title)
+        if found then
+            local title = string.Replace(addon.title, "\n", " ")
+            local wsid = tostring(addon.wsid)
+            print("[Contentalizer] Adding " .. title .. " - " .. wsid)
+            resource.AddWorkshop(wsid)
+        end
+    end
 end
-
-do
-	local COLOR_RED = Color(255, 0, 0)
-	local COLOR_GREEN = Color(0, 255, 0)
-	for _, addon in SortedPairsByMemberValue(engine.GetAddons(), "title") do
-		if addon.wsid and addon.mounted then
-			local found = findContent("", addon.title)
-			if found.foundCurMap then
-				print(COLOR_GREEN, "Adding", addon.title, addon.wsid, "to client Workshop downloads as we're playing this map...")
-				resource.AddWorkshop(tostring(addon.wsid))
-			elseif found.foundMap then
-				print(COLOR_RED, "Ignoring", addon.title, addon.wsid, "because it contains a map file that we aren't playing")
-			elseif found.foundContent then
-				print(COLOR_GREEN, "Adding", addon.title, addon.wsid, "to client Workshop downloads...")
-				resource.AddWorkshop(tostring(addon.wsid))
-			end
-		end
-	end
-end
+print("[Contentalizer] Done!")
