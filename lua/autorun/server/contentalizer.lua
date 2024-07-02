@@ -6,7 +6,7 @@ if CLIENT or not game.IsDedicated() then return end -- Just in case people subsc
 
 local findContent
 do
-	local exts = {"vtf", "vmt", "mp3", "ogg", "wav", "mdl", "phy", "jpg", "jpeg", "png"}
+	local exts = {"vtf", "vmt", "mp3", "ogg", "wav", "mdl", "phy", "jpg", "jpeg", "png", "properties"}
 	function findContent(path, dir, state)
 		state = state or { foundContent = false, foundMap = false, foundCurMap = false }
 		local f, d = file.Find(path .. "*", dir)
