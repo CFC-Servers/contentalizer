@@ -14,34 +14,43 @@ local exts = {
     properties = true,
 }
 
-local function findContent( path, dir )
-    local f, d = file.Find( path .. "*", dir )
-    if istable( f ) then
-        for _, f in ipairs( f ) do
-            local extension = string.GetExtensionFromFilename( f )
+local function hasMap( title )
+    local files = file.Find( "maps/*", title )
+    if files and next( files ) then
+        return true
+    end
+    return false
+end
+
+local function findContent( path, addonName )
+    local files, folders = file.Find( path .. "*", addonName )
+    if files then
+        for _, foundFile in ipairs( files ) do
+            local extension = string.GetExtensionFromFilename( foundFile )
             if extension and exts[extension] then return true end
         end
     end
 
-    if istable( d ) then
-        for _, d in ipairs( d ) do
-            if path .. d ~= "lua" and findContent( path .. d .. "/", dir ) then return true end
+    if folders then
+        for _, folder in ipairs( folders ) do
+            if path .. folder ~= "lua" and findContent( path .. folder .. "/", addonName ) then
+                return true
+            end
         end
     end
     return false
 end
 
 print( "[Contentalizer] Checking for content in addons..." )
-for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
-    if addon.wsid and addon.mounted then
+for _, addon in ipairs( engine.GetAddons() ) do
+    if addon.wsid and addon.mounted and not hasMap( addon.title ) then
         local found = findContent( "", addon.title )
         if found then
             local title = string.Replace( addon.title, "\n", " " )
             local wsid = tostring( addon.wsid )
-            print( "[Contentalizer] Adding " .. title .. " - " .. wsid )
             resource.AddWorkshop( wsid )
+            print( "[Contentalizer] Added " .. title .. " - " .. wsid )
         end
     end
 end
-
 print( "[Contentalizer] Done!" )
