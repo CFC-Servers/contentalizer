@@ -1,5 +1,14 @@
 if game.SinglePlayer() then return end
 
+resource.AddFile = function( fileName )
+    print( "[Contentalizer] resource.AddFile called for " .. fileName or "nil" )
+    print( debug.traceback() )
+end
+resource.AddSingleFile = function( fileName )
+    print( "[Contentalizer] resource.AddSingleFile called for " .. fileName or "nil" )
+    print( debug.traceback() )
+end
+
 local exts = {
     vtf = true,
     vmt = true,
