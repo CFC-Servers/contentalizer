@@ -3,12 +3,12 @@ if game.SinglePlayer() then return end
 resource.AddFile = function( fileName )
     if not fileName then return end
     print( "[Contentalizer] resource.AddFile called for " .. fileName )
-    print( debug.traceback("",3) )
+    print( debug.traceback( "", 3 ) )
 end
 resource.AddSingleFile = function( fileName )
     if not fileName then return end
     print( "[Contentalizer] resource.AddSingleFile called for " .. fileName or "nil" )
-    print( debug.traceback("",3) )
+    print( debug.traceback( "", 3 ) )
 end
 
 local exts = {
