@@ -1,3 +1,4 @@
+if CLIENT then return end -- This file is in shared because shared autorun scripts run before server/client.
 if game.SinglePlayer() then return end
 
 resource.AddFile = function( fileName )
