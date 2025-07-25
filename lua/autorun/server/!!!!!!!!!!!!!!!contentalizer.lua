@@ -11,6 +11,14 @@ resource.AddSingleFile = function( fileName )
     print( debug.traceback( "", 3 ) )
 end
 
+resource.AddedWorkshop = resource.AddedWorkshop or {}
+resource_AddWorkshop = resource_AddWorkshop or resource.AddWorkshop
+function resource.AddWorkshop( wsid )
+    resource_AddWorkshop( wsid )
+
+    resource.AddedWorkshop[wsid] = true
+end
+
 local exts = {
     vtf = true,
     vmt = true,
@@ -65,3 +73,64 @@ for _, addon in ipairs( engine.GetAddons() ) do
     end
 end
 print( "[Contentalizer] Done!" )
+
+concommand.Add( "workshopdl_size", function( ply )
+    if IsValid( ply ) then return end
+
+    local function niceSize( byteSize )
+        local negative = byteSize < 0
+        if negative then
+            byteSize = -byteSize
+        end
+
+        local kb = byteSize / 1024
+        if kb < 1024 then
+            return ( negative and "-" or "" ) .. math.Round( kb ) .. " KB"
+        elseif kb < 1024 * 1024 then
+            return ( negative and "-" or "" ) .. math.Round( kb / 1024 ) .. " MB"
+        elseif kb < 1024 * 1024 * 1024 then
+            return ( negative and "-" or "" ) .. math.Round( kb / ( 1024 * 1024 ), 2 ) .. " GB"
+        end
+
+        return byteSize .. " bytes"
+    end
+
+    local addonCount = table.Count( resource.AddedWorkshop )
+    local doneCount = 0
+
+    local addonInfo = {}
+    for id in pairs( resource.AddedWorkshop ) do
+        if not tonumber( id ) then
+            addonCount = addonCount - 1
+            continue
+        end
+
+        steamworks.FileInfo( id, function( info )
+            addonInfo[id] = info
+            doneCount = doneCount + 1
+            if addonCount == doneCount then
+                local addons = {}
+                local addonSize = 0
+
+                for _, mapInfo in pairs( addonInfo ) do
+                    if mapInfo and mapInfo.size > 0 then
+                        table.insert( addons, mapInfo )
+                        addonSize = addonSize + ( mapInfo.size or 0 )
+                    end
+                end
+
+                table.sort( addons, function( a, b )
+                    return ( a.size or 0 ) > ( b.size or 0 )
+                end )
+
+                print( "Addons:" )
+                for _, addonInfo2 in ipairs( addons ) do
+                    print( addonInfo2.id .. " " .. addonInfo2.title .. " (" .. niceSize( addonInfo2.size ) .. ")" )
+                end
+
+                print( "\nTotal Addons: " .. addonCount .. " (" .. niceSize( addonSize ) .. ")" )
+                print( "Average Addon Size: " .. niceSize( addonSize / addonCount ) )
+            end
+        end )
+    end
+end )
