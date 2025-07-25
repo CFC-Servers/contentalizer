@@ -17,6 +17,7 @@ resource_AddWorkshop = resource_AddWorkshop or resource.AddWorkshop
 function resource.AddWorkshop( wsid )
     resource_AddWorkshop( wsid )
 
+    wsid = tostring( wsid )
     resource.AddedWorkshop[wsid] = true
 end
 
